@@ -47,9 +47,11 @@ public class SimpleEntityData extends EntityData<Entity> {
 				return false;
 			if (c != other.c)
 				return false;
-			assert codeName.equals(other.codeName);
-			assert isSupertype == other.isSupertype;
-			return true;
+			if (codeName.equals(other.codeName)) {
+				return true;
+			}
+			assert isSupertype != other.isSupertype;
+			return false;
 		}
 	}
 	
@@ -253,6 +255,10 @@ public class SimpleEntityData extends EntityData<Entity> {
 		if (Skript.isRunningMinecraft(1, 21, 11)) {
 			addSimpleEntity("camel husk", CamelHusk.class);
 			addSimpleEntity("parched", Parched.class);
+		}
+
+		if (Skript.isRunningMinecraft(26, 2)) {
+			addSimpleEntity("sulfur cube", SulfurCube.class);
 		}
 
 		// SuperTypes

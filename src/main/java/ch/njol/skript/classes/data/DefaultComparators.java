@@ -30,6 +30,8 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.skriptlang.skript.bukkit.potion.util.SkriptPotionEffect;
 import org.skriptlang.skript.lang.comparator.Comparator;
 import org.skriptlang.skript.lang.comparator.Comparators;
 import org.skriptlang.skript.lang.comparator.Relation;
@@ -445,30 +447,22 @@ public class DefaultComparators {
 			}
 		});
 		
-		// StructureType - StructureType
-		Comparators.registerComparator(StructureType.class, StructureType.class, new Comparator<StructureType, StructureType>() {
-			@Override
-			public Relation compare(StructureType s1, StructureType s2) {
-				return Relation.get(CollectionUtils.containsAll(s2.getTypes(), s2.getTypes()));
-			}
-
-			@Override
-			public boolean supportsOrdering() {
-				return false;
-			}
-		});
-		
 		// Object - ClassInfo
-		Comparators.registerComparator(Object.class, ClassInfo.class, new Comparator<Object, ClassInfo>() {
-			@Override
-			public Relation compare(Object o, ClassInfo c) {
-				return Relation.get(c.getC().isInstance(o) || o instanceof ClassInfo && c.getC().isAssignableFrom(((ClassInfo<?>) o).getC()));
+		Comparators.registerComparator(Object.class, ClassInfo.class, (object, classInfo) -> {
+			if (classInfo.getC().isInstance(object)) {
+				return Relation.EQUAL;
 			}
-
-			@Override
-			public boolean supportsOrdering() {
-				return false;
+			Class<?> objectClass;
+			// TODO this behavior should be provided via a dedicated API (for handling wrapper classes)
+			if (object instanceof ClassInfo<?> objectClassInfo) {
+				objectClass = objectClassInfo.getC();
+			} else if (object instanceof SkriptPotionEffect) { // compatibility: treat SkriptPotionEffect the same as PotionEffect
+				objectClass = PotionEffect.class;
+			} else {
+				return Relation.NOT_EQUAL;
 			}
+			//noinspection unchecked
+			return Relation.get(classInfo.getC().isAssignableFrom(objectClass));
 		});
 		
 		// DamageCause - ItemType
@@ -557,35 +551,6 @@ public class DefaultComparators {
 				return false;
 			}
 		});
-
-		// EnchantmentOffer Comparators
-		// EnchantmentOffer - EnchantmentType
-		Comparators.registerComparator(EnchantmentOffer.class, EnchantmentType.class, new Comparator<EnchantmentOffer, EnchantmentType>() {
-			@Override
-			public Relation compare(EnchantmentOffer eo, EnchantmentType et) {
-				return Relation.get(eo.getEnchantment() == et.getType() && eo.getEnchantmentLevel() == et.getLevel());
-			}
-
-			@Override
-			public boolean supportsOrdering() {
-				return false;
-			}
-		});
-		// EnchantmentOffer - Experience
-		Comparators.registerComparator(EnchantmentOffer.class, Experience.class, new Comparator<EnchantmentOffer, Experience>() {
-			@Override
-			public Relation compare(EnchantmentOffer eo, Experience exp) {
-				return Relation.get(eo.getCost() == exp.getXP());
-			}
-
-			@Override public boolean supportsOrdering() {
-				return false;
-			}
-		});
-
-		//EnchantmentType - Enchantment
-		Comparators.registerComparator(EnchantmentType.class, Enchantment.class, ((enchantmentType, enchantment) ->
-			Relation.get(enchantmentType.getType().equals(enchantment))));
 
 		Comparators.registerComparator(Inventory.class, InventoryType.class, new Comparator<Inventory, InventoryType>() {
 			@Override
